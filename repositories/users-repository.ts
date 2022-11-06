@@ -13,7 +13,7 @@ export const getUserByEmail = (email: string): UserEntry | undefined => {
 };
 
 export const insertUser = (username: string, user: UserEntry): boolean => {
-  if (!MEMORY_DB[username]) {
+  if (MEMORY_DB[username]) {
     return false;
   }
   MEMORY_DB[username] = user;
