@@ -1,5 +1,5 @@
 import express = require('express');
-import userRouter from './routes/users';
+import userRouter from './routes/users-router';
 // CODE HERE
 //
 // I want to be able to register a new unique user (username and password). After the user is created I

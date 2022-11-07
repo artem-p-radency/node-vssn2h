@@ -1,49 +1,48 @@
 import { UserDto } from '../models/user-dto';
-import * as userService from '../services/user-service';
+import * as userService from '../services/users-service';
 import { Request, Response } from 'express';
 import { UserDtoValidator } from '../validators/user-dto-validator';
+import { ApiResponse } from '../models/response';
 
-export const register = (req: Request, res: Response) => {
+// Request body -> UserDto
+// Validate user object using joi
+// - username (required, min 3, max 24 characters)
+// - email (required, valid email address)
+// - type (required, select dropdown with either 'user' or 'admin')
+// - password (required, min 5, max 24 characters, upper and lower case, at least one special character)
+export const register = async (req: Request, res: Response) => {
   const validationResuts = UserDtoValidator.validate(req.body);
 
   if (validationResuts.error) {
     res.status(400);
-    res.send(validationResuts.error);
+    res.json(toResponse(validationResuts.error.message));
     return;
   }
   const userDto: UserDto = validationResuts.value;
-  const success = userService.register(userDto);
+  const success = await userService.register(userDto);
   if (success) {
     res.status(200);
-    res.send('User has been registered succesfully');
+    res.json(toResponse(undefined, { username: userDto.username }));
   } else {
     res.status(409);
-    res.send('User with this username has already been registered');
+    res.json(toResponse('User with this username has already been registered'));
   }
 };
 
-export const login = (req: Request, res: Response) => {
-  const loginSuccess = userService.login(req.body.username, req.body.password);
+// Request body -> { username: string, password: string }
+// Return 200 if username and password match
+//Return 401 else
+export const login = async (req: Request, res: Response) => {
+  const loginSuccess = await userService.login(req.body.username, req.body.password);
   if (loginSuccess) {
     res.status(200);
-    res.send('Successfully loggined');
+    res.json(toResponse(undefined, { username: req.body.username }));
   } else {
     res.status(401);
-    res.send('Invalid username or password');
+    res.json(toResponse('Invalid username or password'));
   }
 };
 
-// // Request body -> UserDto
-// router.get('/register', (req: Request, res: Response, next: NextFunction) => {
-//   // Validate user object using joi
-//   // - username (required, min 3, max 24 characters)
-//   // - email (required, valid email address)
-//   // - type (required, select dropdown with either 'user' or 'admin')
-//   // - password (required, min 5, max 24 characters, upper and lower case, at least one special character)
-// });
-
-// // Request body -> { username: string, password: string }
-// router.post('/login', (req: Request, res: Response, next: NextFunction) => {
-//   // Return 200 if username and password match
-//   // Return 401 else
-// });
+const toResponse = <T>(error?: string, data?: T): ApiResponse<T> => ({
+  error, data
+})
